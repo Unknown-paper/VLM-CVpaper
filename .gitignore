@@ -1,0 +1,46 @@
+# Model weights and caches
+checkpoints/
+models--*/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+.cache/
+.huggingface/
+
+# Generated data and experiment output
+data/generated/
+data/coco/
+outputs/
+results/
+logs/
+artifacts/
+cache/
+wandb/
+*.csv
+*.jsonl
+figures/*.png
+figures/*.pdf
+
+# Environments and Python caches
+.conda/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local secrets
+.env
+.env.*
+!.env.example

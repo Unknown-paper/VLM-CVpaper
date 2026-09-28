@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "serialization-fragility-vlm"
+version = "0.1.0"
+description = "Reproducible experiments for visual serialization fragility in dynamic-resolution VLMs"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+dependencies = [
+  "accelerate>=1.0",
+  "matplotlib>=3.8",
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "Pillow>=10.0",
+  "PyYAML>=6.0",
+  "scipy>=1.12",
+  "statsmodels>=0.14",
+  "torch>=2.4",
+  "torchvision>=0.19",
+  "transformers==4.57.1",
+]
+
+[project.optional-dependencies]
+quantization = ["bitsandbytes>=0.45"]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src"]
+testpaths = ["tests"]

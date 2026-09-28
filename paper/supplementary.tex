@@ -1,0 +1,221 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\IfFileExists{cvpr.sty}{\usepackage[review]{cvpr}}{\usepackage[margin=0.75in,columnsep=0.25in]{geometry}}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{subcaption}
+\usepackage{url}
+\usepackage{enumitem}
+
+\title{Supplementary Material: Spatial Serialization Fragility in Dynamic-Resolution Vision-Language Models}
+\author{Anonymous CVPR Submission}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent\textbf{Status.}
+This file is a structured supplementary outline.  It records the material that must be included and the verified values to use; figure/table numbering will be finalized after the official CVPR 2027 author kit and page allocation are available.
+
+\section{Experimental Setup}
+
+\subsection{Models and immutable revisions}
+
+\begin{table*}[t]
+\centering
+\small
+\caption{Model artifacts used in the recorded experiments.}
+\begin{tabular}{llll}
+\toprule
+Model & Hugging Face repository & Revision & Precision / interface \\
+\midrule
+LLaVA-OneVision-7B & \texttt{llava-hf/llava-onevision-qwen2-7b-ov-hf} & \texttt{0d50680527681998e456c7b78950205bedd8a068} & FP16; Transformers LLaVA-OneVision \\
+Qwen2.5-VL-7B & \texttt{Qwen/Qwen2.5-VL-7B-Instruct} & \texttt{cc594898137f460bfe9f0759e9844b3ce807cfb5} & BF16; Transformers, SDPA \\
+InternVL3-8B & \texttt{OpenGVLab/InternVL3-8B-Instruct} & \texttt{ddb3a169d5582e5c76e0809a128e55ab63686ada} & BF16; pinned remote code \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{itemize}[leftmargin=*]
+    \item Cite the released \texttt{reproducibility/MODEL\_MANIFEST.md} and \texttt{CHECKSUMS.md} for model-file identity.
+    \item State that the original experiment directory did not retain a project Git commit or immutable container digest; current intervention sources are hashed, but historical bit-for-bit reconstruction is not established.
+\end{itemize}
+
+\subsection{Runtime and inference}
+
+\begin{itemize}[leftmargin=*]
+    \item Hardware: four NVIDIA GeForce RTX 4090 GPUs (24,564 MiB reported per GPU), 44 vCPU, 240 GB RAM.
+    \item Software: Ubuntu 24.04.1 LTS; Python 3.12.3; PyTorch \texttt{2.7.0a0+7c8ec84dab.nv25.03}; Transformers 4.57.1; CUDA runtime 12.8; cuDNN 9.8.0; driver 550.54.14.
+    \item Execution: four independent scene-level shards, one process/GPU, batch size one.
+    \item Generation: greedy, \texttt{do\_sample=False}, maximum eight new tokens, EOS or length stopping.  Temperature is not passed and is inactive.
+    \item Final controlled-natural answers use mean conditional candidate log likelihood with \texttt{use\_cache=False}; they are not free-form generations.
+    \item Seeds: 20260927 for the final synthetic dataset and primary analyses; deterministic SHA-256 salt \texttt{final-natural-v2-marker-locked} for the controlled-natural selection.
+\end{itemize}
+
+\subsection{Statistical protocol}
+
+\begin{itemize}[leftmargin=*]
+    \item Independent resampling unit: scene.
+    \item Uncertainty: nonparametric percentile 95\% CI from 20,000 scene-bootstrap draws unless noted.
+    \item Paired binary outcomes: two-sided exact binomial test on discordant pairs.
+    \item Multiplicity: Holm correction over the prespecified E12--E14, E16, E17, and E18 families; E11 exploratory cross-model effects were not multiplicity corrected.
+    \item E19 diagnostic correlations use up to 5,000 resamples and are not confirmatory.
+    \item E18 and E19 reuse E17 predictions.  Their scene counts must not be added as independent evidence.
+\end{itemize}
+
+\section{Dataset Construction}
+
+\subsection{Controlled synthetic benchmark}
+
+\begin{itemize}[leftmargin=*]
+    \item 440 scenes; 220 horizontal and 220 vertical; $768\times768$ RGB PNG canvas with background $(245,245,242)$.
+    \item Four shapes (square, circle, triangle, diamond) and four colors (red, blue, green, yellow); 40$\times$40-pixel boxes.
+    \item Answer-critical pair center distance: 168 pixels.  Relation images contain four objects, including an aligned distractor pair.
+    \item Phase candidates: $-128,-96,-64,-32,0,32,64,96,128$ pixels.  Object-cut phases are excluded when selecting intact same/cross conditions.
+    \item Exact prompt templates, answer vocabularies, image hashes, and manifest fields should be reproduced verbatim from the release.
+\end{itemize}
+
+\paragraph{Tasks.}
+Include one example each of: single-object shape recognition; yes/no binary left/right/above/below relation; and compositional selection of the shape left of or above a named reference object.
+Disclose that the main recognition image contains one object, whereas the relation image contains four; the matched control below removes this image-complexity difference.
+
+\subsection{Controlled-natural COCO construction}
+
+\begin{itemize}[leftmargin=*]
+    \item Source: COCO 2017 \texttt{instances\_train2017.json} annotations.
+    \item Select two category-distinct instances; square context crop side is $1.18\times\max(w,h)$; resize/pad each panel to 160$\times$160 with Lanczos.
+    \item Place panels on a $768\times768$ gray canvas at 200-pixel center distance.
+    \item Mark target/reference roles with 6-pixel red/blue frames.
+    \item Calibration/test: 28/108 scenes; no generated-scene or COCO source-image overlap.  Test set has 972 condition--task rows.
+    \item Allowed target categories: bicycle, cell phone, cup, laptop, mouse, sandwich, sink, train, tv, umbrella.
+    \item Required wording: ``held-out controlled-natural COCO-crop compositions,'' not ``untouched natural images.''
+\end{itemize}
+
+\section{Intervention Details}
+
+\subsection{Formal definition}
+
+Given post-encoder visual content $F=(f_1,\ldots,f_n)$ and interface positions $P=(p_1,\ldots,p_n)$, define
+\begin{align}
+\text{canonical}:&(F,P), &
+\text{content-only}:&(\pi(F),P),\\
+\text{position-only}:&(F,\pi(P)), &
+\text{joint}:&(\pi(F),\pi(P)).
+\end{align}
+Clarify that $\pi$ acts on selected coherent blocks; tokens outside the movable subset remain canonical.
+
+\subsection{Qwen implementation}
+
+\begin{itemize}[leftmargin=*]
+    \item Logged vision grid $1\times54\times54$; merged language-model grid $27\times27$, 729 visual tokens.
+    \item Four $13\times13$ corner blocks move (676 tokens); center row and column remain fixed (53 tokens).
+    \item Content hook: post-encoder image features.  Position hook: all visual coordinate axes returned by M-RoPE index construction.  Reset \texttt{rope\_deltas} before each example.
+    \item Content-only fixes M-RoPE; position-only fixes features; joint applies the same destination-to-source block permutation to both.
+\end{itemize}
+
+\subsection{LLaVA implementation}
+
+\begin{itemize}[leftmargin=*]
+    \item Packed layout: 729 thumbnail tokens plus a $54\times55$ high-resolution matrix, comprising 2,916 content tokens and 54 newline tokens; total 3,699.
+    \item Four $27\times27$ high-resolution blocks move.  Thumbnail and newline tokens remain fixed.
+    \item Position-only changes scalar language-model sequence position IDs, not SigLIP's internal 2D positions.
+    \item Content/position hooks execute after the vision encoder/projector at the packed interface.
+\end{itemize}
+
+\subsection{Hook validation}
+
+Document \texttt{--debug-hooks} / \texttt{DEBUG\_HOOKS=1} and archive JSON records containing execution status, tensor shape, token count, permutation ID, and SHA-256 checksums before/after the hook.
+Canonical conditions should preserve checksums; permuted conditions should preserve shape/count while changing byte-order checksums.
+
+\section{Complete Quantitative Tables}
+
+\subsection{E11: cross-model behavior}
+Expand main-paper Table~1 with canonical and perturbed accuracies, 95\% CIs, exact paired $p$ values, model-specific token counts, and an explicit column distinguishing pre-encoder from post-encoder interventions.
+
+\subsection{E12: LLaVA 2$\times$2$\times$2 factorial}
+Report all cells and the following main effects (recognition / binary / composition, pp):
+\begin{itemize}[leftmargin=*]
+    \item cross partition: $+0.11/-16.14/-21.31$;
+    \item permuted order: $-0.11/-26.02/-21.31$;
+    \item thumbnail removed: $-0.23/-15.34/-13.35$.
+\end{itemize}
+Include partition-by-order, partition-by-thumbnail, and order-by-thumbnail interactions and their Holm-adjusted tests.
+State that factorial marginal effects are not identical to the canonical boundary contrast.
+
+\subsection{E13--E14: post-encoder causal decomposition}
+Include all canonical/content/position/joint accuracies, changes, CIs, exact tests, relation-minus-recognition differences, and factorial interactions for Qwen and LLaVA.
+Place hook validation records adjacent to the table or link them from the caption.
+
+\subsection{E16: controlled-natural validation}
+Include calibration-gate values and the complete same/cross/cross-plus-permuted test table.
+State that same-to-cross relation effects are null/positive and that the composition gate is passed by one example.
+
+\section{Additional Controls and Falsification}
+
+\subsection{Matched four-object recognition}
+
+\begin{itemize}[leftmargin=*]
+    \item 96 LLaVA scenes; prompt: ``What shape is the \{color\} object?''; four-shape closed answer set.
+    \item Canonical/permuted recognition: 100\%/100\%.
+    \item Canonical/permuted binary relation: 93.75\%/68.75\%; degradation $25.00$ pp, 95\% CI $[16.67,33.33]$, exact $p=1.19\times10^{-7}$.
+    \item Limitation: closed-set recognition remains at ceiling and does not equalize every operation with spatial reasoning.
+\end{itemize}
+
+\subsection{Exhaustive four-region topology}
+
+Enumerate all 24 permutations: identity, seven nonidentity $D_4$ grid automorphisms, and sixteen adjacency-breaking permutations.
+Report primary breaking-minus-preserving contrasts and named graph-preserving counterexamples.
+Limit every conclusion to the unweighted four-node 2$\times$2 adjacency graph.
+
+\subsection{Inference-time augmentation}
+
+Define S0 identity, S1 180-degree reverse, S2 90-degree rotation, S3 column-major transpose, and S4 fixed random-breaking $(0,3,1,2)$.
+Report the unweighted modal vote with canonical fallback for multiclass ties, repeated-S0 and random-answer controls, and the unattainable any-view oracle.
+The result is negative for this vote; no calibrated or learned selector was tested.
+
+\subsection{Serialization disagreement}
+
+Report pairwise agreement, unanimity, Shannon entropy, normalized entropy, random-view accuracy versus disagreement, and canonical-error diagnostics.
+Required caveat: disagreement and random-view accuracy are computed from the same five predictions and are mathematically coupled.
+Do not label disagreement as calibrated uncertainty.
+
+\subsection{Generic query-order control}
+
+\begin{itemize}[leftmargin=*]
+    \item 96 LLaVA scenes; compare canonical, post-encoder visual content permutation, and a four-block query-embedding permutation.
+    \item Visual degradation: recognition/binary/composition $0/25.00/25.00$ pp.
+    \item Language degradation: $0/51.04/69.79$ pp.
+    \item The language control changes word order and therefore query semantics.  It is a destructive generic-order baseline, not a semantics-preserving control.
+    \item Required conclusion: the experiment does not show that visual serialization is uniquely more harmful than generic sequence order perturbation.
+\end{itemize}
+
+\subsection{Established-benchmark pilot}
+
+Report the 60-scene VSR subset only as an inconclusive pilot: canonical recognition-like/spatial accuracy is 46.67\%/51.67\%; spatial degradation is 6.67 pp, but the exact paired $p=.125$ and both baselines are near chance.
+Do not use it as confirmatory natural-image evidence.
+
+\section{Exploratory Analyses}
+
+Move attention maps, question-to-object attention, representation cosine/CKA, coordinate prompting, overlap, and thumbnail-content probes to this section.
+Label outcome-blind versus post-hoc subsets and negative/inconclusive results.
+Do not use attention or representation similarity to assert a causal binding mechanism.
+
+\section{Reproducibility Checklist}
+
+\begin{itemize}[leftmargin=*]
+    \item Model repository and immutable revision for all three checkpoints.
+    \item InternVL remote-code revision.
+    \item Processor, tokenizer, config, and weight-file hashes.
+    \item Environment, driver/runtime versions, and launch commands.
+    \item Dataset manifests, image SHA-256 values, prediction tables, analysis outputs, and figure-generation commands.
+    \item Public release tag and current source commit once the manuscript snapshot is frozen.
+    \item Immutable container digest remains unavailable for the historical runs; record one for any archival rerun.
+\end{itemize}
+
+\section{Supplementary Limitations}
+
+List explicitly: three model families; clean post-encoder decomposition only for Qwen and LLaVA; architecture-specific nonidentical hooks; fixed token subsets; mainly 2$\times$2 layouts; synthetic recognition ceilings; controlled crops rather than intact scenes; weak VSR pilot; no matched fixed-resolution architecture; no unique internal mechanism; no validated mitigation; no training-time causal claim.
+
+\end{document}

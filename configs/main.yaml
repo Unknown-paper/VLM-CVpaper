@@ -1,0 +1,22 @@
+seed: 20260927
+image:
+  width: 768
+  height: 768
+  object_size_px: 40
+  critical_object_distance_px: 168
+tasks:
+  - object_recognition
+  - spatial_relation
+  - compositional_relation
+decoding:
+  do_sample: false
+  temperature: null
+  max_new_tokens: 8
+statistics:
+  bootstrap_unit: scene
+  bootstrap_draws: 20000
+  confidence_level: 0.95
+  multiple_comparison_correction: holm
+hardware:
+  tested_gpus: 4x NVIDIA RTX 4090 24GB
+  execution: one independent shard per GPU

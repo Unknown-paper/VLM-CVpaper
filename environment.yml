@@ -1,0 +1,13 @@
+name: serialization-fragility
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pytorch>=2.4
+  - torchvision>=0.19
+  - pytorch-cuda=12.4
+  - pip
+  - pip:
+      - -r requirements.txt

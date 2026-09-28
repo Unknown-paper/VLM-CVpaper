@@ -1,0 +1,19 @@
+models:
+  llava_onevision_7b:
+    checkpoint: llava-hf/llava-onevision-qwen2-7b-ov-hf
+    precision: fp16
+    expected_visual_tokens: 3699
+    processor: slow
+  qwen2_5_vl_7b:
+    checkpoint: Qwen/Qwen2.5-VL-7B-Instruct
+    precision: bf16
+    expected_visual_tokens: 729
+    attention_implementation: sdpa
+  internvl3_8b:
+    checkpoint: UNKNOWN
+    precision: bf16
+    expected_visual_tokens: 1280
+    trust_remote_code: true
+
+# Exact checkpoint revisions used in the completed experiments were not logged.
+# Pin immutable revisions before archival reproduction.
