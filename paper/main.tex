@@ -410,7 +410,8 @@ This study has four central limitations.
 First, it does not identify a unique internal neural process.
 The interventions hold other specified factors fixed while varying content and position assignments at the visual-token/language-model interface, but they do not locate a circuit, explain how training creates the sensitivity, or justify a claim about attention-mediated binding.
 
-Second, controlled synthetic scenes are deliberate: they isolate serialization effects by fixing visual evidence, object identity, spatial configuration, token count, and the specified transformation.
+Second, controlled synthetic scenes are intentionally used as the primary causal-analysis setting because they isolate serialization effects while fixing visual evidence, object identity, spatial configuration, token budget, and the specified transformation.
+Natural-image validation serves as complementary evidence rather than the primary basis for causal isolation.
 This control narrows ecological validity, and our COCO-derived benchmark uses composed object crops and colored markers rather than intact photographs.
 A 60-scene VSR subset was directionally consistent but had near-chance canonical performance and a nonsignificant exact paired test, so it is not used as confirmatory evidence.
 Broader validation on unconstrained natural images remains future work.
@@ -423,7 +424,8 @@ We do not establish that dynamic resolution is necessary relative to a matched f
 
 Fourth, we do not demonstrate a mitigation.
 Unweighted voting fails, overlap and coordinate-prompt probes are setting dependent, and no training-time objective is tested.
-Future work should evaluate intact natural scenes with sufficiently strong canonical baselines, larger and multiscale region graphs, additional architectures, and training procedures that explicitly encourage serialization consistency.
+Future work should evaluate intact natural scenes with sufficiently strong canonical baselines, larger and multiscale region graphs, and larger-scale studies across additional models and architectures.
+Potential mitigation directions not tested here include serialization-aware training objectives and data augmentation strategies.
 
 \section{Conclusion}
 
