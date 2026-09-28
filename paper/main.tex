@@ -45,12 +45,12 @@ These choices are often treated as implementation details; however, if two inter
 We do not attribute such differences to dynamic resolution itself; these models provide a setting in which to characterize this interface-level reliability property.
 
 Most VLM evaluations report answer accuracy under a single preprocessing realization: one resizing, tiling, packing, and interface path.
-This measures whether a model answers correctly under the selected path, but not whether its answer is stable across justified alternatives that preserve visual evidence and task semantics.
+This measures performance conditional on one interface realization while leaving unmeasured whether predictions remain consistent across justified alternatives that preserve visual evidence and task semantics.
 Prior analyses have documented hallucination, weak visual grounding, and spatial-reasoning deficits~\cite{tong2024eyes,chen2024spatialvlm}, while controlled benchmarks such as CLEVR, GQA, and SpatialSense isolate different forms of visual reasoning~\cite{johnson2017clevr,hudson2019gqa,yang2019spatialsense}.
 Our question is therefore not simply whether a VLM can answer spatial questions, but whether its answers remain stable when the same evidence is represented through controlled alternative serializations.
 We call this complementary reliability property \emph{evidence-preserving serialization invariance}.
-The object of study is not generic token-permutation sensitivity: arbitrary edits to a language sequence can change its meaning.
-The relevant comparison instead preserves the image evidence and task semantics while varying specified interface variables; ordinary crop-order tests cannot isolate these variables from changes in pixels, encoder computation, token count, or position information.
+This is not merely a token-permutation test: the principal diagnostic interventions occur after visual encoding while preserving source pixels, the selected feature multiset, question semantics, and token count.
+By contrast, arbitrary edits to a language sequence can change meaning, while ordinary crop-order tests can confound serialization with changes in encoder computation or position information.
 
 We ask: \emph{Are relational predictions in dynamic-resolution VLMs invariant to alternative spatial serializations of the same visual evidence?}
 We treat an image-to-sequence mapping as an interface whose visual content and position assignment can be intervened on separately after the vision encoder.
@@ -64,7 +64,7 @@ Behavioral reserialization effects appear in three tested model families, but th
 Recognition shows much smaller degradation than binary and compositional relations; this gap persists when recognition uses the same four-object scenes and distractors.
 At the same time, a generic language-order perturbation is more destructive than the tested visual perturbation, so we do not claim that visual serialization is uniquely sensitive among all sequence operations.
 
-We make exactly three contributions:
+Our contributions are threefold:
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
     \item We introduce evidence-preserving serialization invariance as a reliability criterion for visual-language interfaces, enabling controlled analysis of how the same encoded visual evidence is transferred into language-model sequences.
     \item We provide cross-model evidence that relational reasoning exhibits substantially larger serialization sensitivity than object recognition, including under a matched four-object control with the same images and distractors.
@@ -119,6 +119,11 @@ Given a question $q$, the model output and a diagnostic serialization transforma
 Here $\mathcal{S}$ serializes visual content and position information at the visual-language interface, and $P$ denotes signals exposed at this interface rather than necessarily the encoder's internal 2D positions.
 The arrow denotes a controlled diagnostic transformation used to test behavioral stability, not an assumption that the two serialized inputs are equivalent to the model.
 The visual evidence remains fixed: the source image and selected visual-feature multiset are unchanged; the question and token count are also fixed.
+Let $\mathcal{E}$ denote the family of such evidence-preserving serializations.
+For $\mathcal{S},\mathcal{S}'\in\mathcal{E}$, prediction-level serialization invariance on an example requires
+\begin{equation}
+    M\!\left(\mathcal{S}(F,P),q\right)=M\!\left(\mathcal{S}'(F,P),q\right).
+\end{equation}
 For a permutation $\pi$ over coherent region blocks, define $\pi(F)$ and $\pi(P)$ as blockwise reassignment to destination slots.
 The four conditions are
 \begin{align}
@@ -137,6 +142,7 @@ We define serialization sensitivity and the relation-selective gap as
     \Delta_{\mathrm{gap}} &= \Delta_{\mathrm{relation}}-\Delta_{\mathrm{recognition}}.
 \end{align}
 Positive values denote degradation under $\mathcal{S}'$; result tables retain their stated perturbed-minus-canonical sign convention.
+A positive $\Delta_{\mathrm{gap}}$ indicates that relational accuracy is more serialization-sensitive than recognition accuracy; we compute it separately for binary and compositional relations.
 
 These diagnostic counterfactuals are not proposed inference procedures.
 They serve as a controlled lens on the visual-language interface: by fixing source pixels, the question, the selected feature multiset, and token count, they test behavioral stability under specified serialization changes without presuming that all serializations are semantically equivalent.
