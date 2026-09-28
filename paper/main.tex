@@ -27,13 +27,13 @@
 
 \begin{abstract}
 Dynamic-resolution vision-language models (VLMs) increasingly rely on visual-language interfaces that convert spatial evidence into variable-length token sequences, yet evaluations typically report accuracy under a single preprocessing realization.
-We introduce \emph{evidence-preserving serialization invariance}---whether predictions remain consistent across controlled presentations of the same encoded visual evidence---as a reliability criterion for these interfaces.
-We operationalize this criterion with post-encoder diagnostic counterfactuals that reassign coherent spatial-region features and their associated interface-level position signals while holding source pixels, the question, the visual-feature multiset, and token count fixed.
+We introduce \emph{evidence-preserving serialization invariance}---whether predictions remain consistent across controlled presentations of the same encoded visual evidence---as a reliability criterion for these interfaces, and define the Evidence-Preserving Serialization Gap (EPSG) to quantify relation-selective sensitivity.
+Our post-encoder diagnostic counterfactuals reassign coherent spatial-region features and their associated interface-level position signals while holding source pixels, the question, the visual-feature multiset, and token count fixed.
 Across LLaVA-OneVision-7B, Qwen2.5-VL-7B, and InternVL3-8B, we reveal task-selective instability: relational predictions are substantially less consistent under reserialization than object recognition.
 A matched four-object recognition control shows no observed degradation in this sample, while binary relation accuracy falls from 93.75\% to 68.75\%.
 The post-encoder decomposition identifies architecture-dependent content--position interaction patterns across Qwen and LLaVA.
 Exhaustive four-region tests show that preserving a simple 2D adjacency graph is not sufficient for robustness, and unweighted voting over serializations does not provide a remedy.
-These results identify an under-measured reliability dimension of the visual-language interface; they do not imply a generic token-order law, a universal VLM failure, or that dynamic resolution itself is the cause.
+These results identify an overlooked reliability dimension of the visual-language interface; they do not imply a generic token-order law, a universal VLM failure, or that dynamic resolution itself is the cause.
 \end{abstract}
 
 \section{Introduction}
@@ -46,10 +46,11 @@ We do not attribute such differences to dynamic resolution itself; these models 
 
 Most VLM evaluations report answer accuracy under a single preprocessing realization: one resizing, tiling, packing, and interface path.
 This measures performance conditional on one interface realization while leaving unmeasured whether predictions remain consistent across justified alternatives that preserve visual evidence and task semantics.
+This consistency gap is an evaluation blind spot: single-path accuracy cannot reveal whether the interface representation itself is behaviorally stable.
 Prior analyses have documented hallucination, weak visual grounding, and spatial-reasoning deficits~\cite{tong2024eyes,chen2024spatialvlm}, while controlled benchmarks such as CLEVR, GQA, and SpatialSense isolate different forms of visual reasoning~\cite{johnson2017clevr,hudson2019gqa,yang2019spatialsense}.
 Our question is therefore not simply whether a VLM can answer spatial questions, but whether its answers remain stable when the same evidence is represented through controlled alternative serializations.
 We call this complementary reliability property \emph{evidence-preserving serialization invariance}.
-This is not merely a token-permutation test: the principal diagnostic interventions occur after visual encoding while preserving source pixels, the selected feature multiset, question semantics, and token count.
+Unlike generic token-permutation analyses, our principal diagnostic interventions occur after visual encoding while preserving source pixels, the selected feature multiset, question content, and visual-token count; they do not arbitrarily corrupt the sequence.
 By contrast, arbitrary edits to a language sequence can change meaning, while ordinary crop-order tests can confound serialization with changes in encoder computation or position information.
 
 We ask: \emph{Are relational predictions in dynamic-resolution VLMs invariant to alternative spatial serializations of the same visual evidence?}
@@ -66,9 +67,9 @@ At the same time, a generic language-order perturbation is more destructive than
 
 Our contributions are threefold:
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
-    \item We introduce evidence-preserving serialization invariance as a reliability criterion for visual-language interfaces, enabling controlled analysis of how the same encoded visual evidence is transferred into language-model sequences.
-    \item We provide cross-model evidence that relational reasoning exhibits substantially larger serialization sensitivity than object recognition, including under a matched four-object control with the same images and distractors.
-    \item We reveal architecture-dependent content--position interaction patterns in Qwen and LLaVA, showing that the observed fragility cannot be reduced to one shared content/position sensitivity pattern across the tested architectures.
+    \item We introduce evidence-preserving serialization invariance as a reliability criterion for visual-language interfaces and define EPSG to quantify task-selective serialization sensitivity.
+    \item We provide controlled cross-model evidence that relational reasoning exhibits substantially larger serialization gaps than object recognition under the same visual evidence, including a matched four-object control with the same images and distractors.
+    \item We reveal architecture-dependent serialization sensitivity patterns: Qwen and LLaVA exhibit different content--position coordination behaviors rather than one shared explanation across the tested architectures.
 \end{enumerate}
 
 \begin{figure*}[t]
@@ -136,16 +137,20 @@ The selected content multiset and position-value multiset are preserved.
 Content-only changes the mapping from region features to sequence slots; position-only changes which position values those features receive; joint preserves the pairing between each moved feature and its moved position while relocating both.
 Figure~\ref{fig:overview} summarizes the construction.
 
-We define serialization sensitivity and the relation-selective gap as
-\begin{align}
-    \Delta_{\mathrm{task}} &= \operatorname{Acc}_{\mathrm{task}}(\mathcal{S})-\operatorname{Acc}_{\mathrm{task}}(\mathcal{S}'), \\
-    \Delta_{\mathrm{gap}} &= \Delta_{\mathrm{relation}}-\Delta_{\mathrm{recognition}}.
-\end{align}
-Positive values denote degradation under $\mathcal{S}'$; result tables retain their stated perturbed-minus-canonical sign convention.
-A positive $\Delta_{\mathrm{gap}}$ indicates that relational accuracy is more serialization-sensitive than recognition accuracy; we compute it separately for binary and compositional relations.
-
 These diagnostic counterfactuals are not proposed inference procedures.
 They serve as a controlled lens on the visual-language interface: by fixing source pixels, the question, the selected feature multiset, and token count, they test behavioral stability under specified serialization changes without presuming that all serializations are semantically equivalent.
+
+\subsection{Quantifying Serialization Fragility}
+
+Let $\mathcal{S}_{\mathrm{can}}$ denote canonical serialization and $\mathcal{S}_{\mathrm{int}}$ an evidence-preserving intervention.
+For task $t$, define its serialization sensitivity and the Evidence-Preserving Serialization Gap as
+\begin{align}
+    \Delta_t &= \operatorname{Acc}_t(\mathcal{S}_{\mathrm{can}})-\operatorname{Acc}_t(\mathcal{S}_{\mathrm{int}}), \\
+    \mathrm{EPSG} &= \Delta_{\mathrm{relation}}-\Delta_{\mathrm{recognition}}.
+\end{align}
+A positive EPSG indicates that serialization changes degrade relational accuracy more than recognition accuracy; we compute it separately for binary and compositional relations.
+EPSG is a diagnostic reliability measure, not a training objective or inference method.
+Result tables retain their stated perturbed-minus-canonical sign convention.
 
 \subsection{Controlled invariants}
 
@@ -255,7 +260,7 @@ The target color is unique; the model must locate one object among three distrac
 The image, four objects, distractors, feature multiset, 3,699-token count, and position IDs are identical between canonical and LLaVA content-only conditions.
 
 Matched recognition is 100\% in both conditions, whereas binary relation accuracy falls from 93.75\% to 68.75\%, a $25.00\pp$ degradation (95\% CI $[16.67,33.33]$; exact paired $p=1.19\!\times\!10^{-7}$).
-The corresponding difference-in-differences is $25.00\pp$.
+The corresponding difference-in-differences, or EPSG, is $25.00\pp$.
 This result addresses distractor and image-complexity mismatch, although the recognition task remains at ceiling and does not equalize every reasoning operation.
 
 \begin{figure}[t]
@@ -402,9 +407,10 @@ This study has four central limitations.
 First, it does not identify a unique internal neural process.
 The interventions hold other specified factors fixed while varying content and position assignments at the visual-token/language-model interface, but they do not locate a circuit, explain how training creates the sensitivity, or justify a claim about attention-mediated binding.
 
-Second, synthetic scenes are essential for controlling object identity, geometry, and answers, but they narrow ecological validity.
-Our COCO-derived benchmark uses composed object crops and colored markers rather than intact photographs.
+Second, controlled synthetic scenes are deliberate: they isolate serialization effects by fixing visual evidence, object identity, spatial configuration, token count, and the specified transformation.
+This control narrows ecological validity, and our COCO-derived benchmark uses composed object crops and colored markers rather than intact photographs.
 A 60-scene VSR subset was directionally consistent but had near-chance canonical performance and a nonsignificant exact paired test, so it is not used as confirmatory evidence.
+Broader validation on unconstrained natural images remains future work.
 
 Third, the post-encoder intervention is architecture specific and partial.
 The LLaVA thumbnail and newline tokens and the Qwen center row and column remain fixed.
@@ -423,6 +429,7 @@ Across the evaluated models and tasks, relational predictions are substantially 
 The tested architectures exhibit different content--position sensitivity patterns, while preserving simple 2D adjacency or applying unweighted serialization voting does not ensure relational consistency.
 Together, these findings establish that interface serialization is part of the evaluated VLM system rather than merely an implementation detail, without attributing the observed fragility to dynamic resolution itself or to a single shared internal process.
 Future work should study training-time robustness objectives and serialization-aware architectures that improve relational consistency across justified, evidence-preserving interface transformations.
+More broadly, serialization behavior should be considered part of a VLM's behavioral specification rather than merely an engineering detail.
 
 {\small
 \IfFileExists{ieeenat_fullname.bst}{\bibliographystyle{ieeenat_fullname}}{\bibliographystyle{plain}}
