@@ -27,13 +27,13 @@
 
 \begin{abstract}
 Dynamic-resolution vision-language models (VLMs) increasingly rely on visual-language interfaces that convert spatial evidence into variable-length token sequences, yet evaluations typically report accuracy under a single preprocessing realization.
-We introduce \emph{evidence-preserving serialization invariance}---whether predictions remain consistent across controlled presentations of the same encoded visual evidence---as a reliability criterion for these interfaces, and define the Evidence-Preserving Serialization Gap (EPSG) to quantify relation-selective sensitivity.
+We introduce \emph{evidence-preserving serialization invariance}---whether predictions remain consistent across controlled presentations of the same encoded visual evidence---as a reliability criterion for these interfaces; the Evidence-Preserving Serialization Gap (EPSG) provides a diagnostic decomposition of relational and matched-recognition degradation.
 Our post-encoder diagnostic counterfactuals reassign coherent spatial-region features and their associated interface-level position signals while holding source pixels, the question, the visual-feature multiset, and token count fixed.
 Across LLaVA-OneVision-7B, Qwen2.5-VL-7B, and InternVL3-8B, we reveal task-selective instability: relational predictions are substantially less consistent under reserialization than object recognition.
 A matched four-object recognition control shows no observed degradation in this sample, while binary relation accuracy falls from 93.75\% to 68.75\%.
 The post-encoder analysis reveals architecture-dependent sensitivity patterns across Qwen and LLaVA.
 Exhaustive four-region tests show that preserving a simple 2D adjacency graph is not sufficient for robustness, and unweighted voting over serializations does not provide a remedy.
-These results identify an overlooked reliability dimension of the visual-language interface; they do not imply a generic token-order law, a universal VLM failure, or that dynamic resolution itself is the cause.
+These results characterize a previously under-measured reliability dimension of the visual-language interface; they do not imply a generic token-order law, a universal VLM failure, or that dynamic resolution itself is the cause.
 \end{abstract}
 
 \section{Introduction}
@@ -51,6 +51,7 @@ Prior analyses have documented hallucination, weak visual grounding, and spatial
 Our question is therefore not simply whether a VLM can answer spatial questions, but whether its answers remain stable when the same evidence is represented through controlled alternative serializations.
 We call this complementary reliability property \emph{evidence-preserving serialization invariance}.
 Unlike generic token-permutation analyses, our principal diagnostic interventions occur after visual encoding while preserving source pixels, the selected feature multiset, question content, and visual-token count; they do not arbitrarily corrupt the sequence.
+The key finding is not that order matters in general, but that the same preserved visual evidence can yield task-selective relational instability across controlled interface realizations.
 By contrast, arbitrary edits to a language sequence can change meaning, while ordinary crop-order tests can confound serialization with changes in encoder computation or position information.
 
 We ask: \emph{Are relational predictions in dynamic-resolution VLMs invariant to alternative spatial serializations of the same visual evidence?}
@@ -67,7 +68,7 @@ At the same time, a generic language-order perturbation is more destructive than
 
 Our contributions are threefold:
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
-    \item We introduce evidence-preserving serialization invariance as a reliability criterion for visual-language interfaces and define EPSG to quantify task-selective serialization sensitivity.
+    \item We introduce evidence-preserving serialization invariance as a reliability criterion for visual-language interfaces and use EPSG as a diagnostic decomposition of task-selective serialization sensitivity.
     \item We provide controlled cross-model evidence that relational reasoning exhibits substantially larger serialization gaps than object recognition under the same visual evidence, including a matched four-object control with the same images and distractors.
     \item We reveal architecture-dependent serialization sensitivity patterns, where different VLMs exhibit different content--position coordination behaviors.
 \end{enumerate}
@@ -150,7 +151,7 @@ For task $t$, define its serialization sensitivity and the Evidence-Preserving S
 \end{align}
 A positive EPSG indicates that serialization changes degrade relational accuracy more than recognition accuracy; we compute it separately for binary and compositional relations.
 Recognition serves as a matched capability control: it tests whether serialization changes primarily disrupt relational composition rather than basic visual identification.
-Unlike raw accuracy degradation, EPSG measures whether serialization sensitivity is selective to relational reasoning after accounting for matched recognition behavior.
+EPSG is not intended as a universal evaluation metric; rather, it is a diagnostic decomposition that isolates serialization sensitivity affecting relational reasoning from degradation observed in matched recognition behavior.
 EPSG is a diagnostic reliability measure, not a training objective or inference method.
 Result tables retain their stated perturbed-minus-canonical sign convention.
 
@@ -192,8 +193,8 @@ Each relation image contains four 40-pixel colored shapes; the answer-critical p
 Horizontal and vertical relations are balanced (220 scenes each).
 We evaluate: (i) object recognition, (ii) binary relations (left/right/above/below), and (iii) compositional relations that require selecting the shape at a queried relation to a reference object.
 The standard recognition item uses a separately rendered single target at the matched location; Sec.~\ref{sec:matched} adds a four-object matched control.
-The synthetic design is intentional: it supports controlled isolation of serialization effects by fixing visual evidence, object identity, spatial configuration, visual-token count, and the specified serialization change.
-It is not intended to approximate the full diversity of real-world images, and broader natural-image validation remains important.
+Controlled synthetic scenes are intentionally used to isolate serialization effects by fixing visual evidence, object identity, spatial configuration, token budget, and transformation variables.
+Natural-image validation serves as complementary evidence rather than the primary causal analysis setting.
 
 \paragraph{Models and inference.}
 We use LLaVA-OneVision-7B in FP16, Qwen2.5-VL-7B in BF16, and InternVL3-8B in BF16, each at an immutable checkpoint revision listed in the supplement.
