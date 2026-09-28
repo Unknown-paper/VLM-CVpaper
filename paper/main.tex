@@ -31,7 +31,7 @@ We introduce \emph{evidence-preserving serialization invariance}---whether predi
 Our post-encoder diagnostic counterfactuals reassign coherent spatial-region features and their associated interface-level position signals while holding source pixels, the question, the visual-feature multiset, and token count fixed.
 Across LLaVA-OneVision-7B, Qwen2.5-VL-7B, and InternVL3-8B, we reveal task-selective instability: relational predictions are substantially less consistent under reserialization than object recognition.
 A matched four-object recognition control shows no observed degradation in this sample, while binary relation accuracy falls from 93.75\% to 68.75\%.
-The post-encoder decomposition identifies architecture-dependent content--position interaction patterns across Qwen and LLaVA.
+The post-encoder decomposition reveals architecture-dependent content--position sensitivity patterns across Qwen and LLaVA.
 Exhaustive four-region tests show that preserving a simple 2D adjacency graph is not sufficient for robustness, and unweighted voting over serializations does not provide a remedy.
 These results identify an overlooked reliability dimension of the visual-language interface; they do not imply a generic token-order law, a universal VLM failure, or that dynamic resolution itself is the cause.
 \end{abstract}
@@ -149,6 +149,8 @@ For task $t$, define its serialization sensitivity and the Evidence-Preserving S
     \mathrm{EPSG} &= \Delta_{\mathrm{relation}}-\Delta_{\mathrm{recognition}}.
 \end{align}
 A positive EPSG indicates that serialization changes degrade relational accuracy more than recognition accuracy; we compute it separately for binary and compositional relations.
+Recognition is used as a matched capability control because it tests whether serialization changes primarily affect relational composition rather than basic visual identification.
+Unlike raw accuracy degradation, EPSG measures whether serialization sensitivity is selective to relational reasoning after accounting for matched recognition behavior.
 EPSG is a diagnostic reliability measure, not a training objective or inference method.
 Result tables retain their stated perturbed-minus-canonical sign convention.
 
